@@ -16,6 +16,7 @@ import javax.swing.*;
  */
 public class LabelManager {
 
+    private List<Label> cacheRendered = new ArrayList<>();
     private List<Label> labels;
 
     public LabelManager() {
@@ -54,6 +55,10 @@ public class LabelManager {
 
     public void drawLabels(JPanel panel) {
         drawLabels(panel, false);
+    }
+
+    public List<Label> getLabels() {
+        return labels;
     }
     
     public class Label {
@@ -103,14 +108,8 @@ public class LabelManager {
             return visible;
         }
 
-        // public void drawLabel(JPanel panel) {
-        //     JLabel label = new JLabel(text);
-        //     label.setBounds(x, y, width, height);
-        //     label.setVisible(visible);
-        //     panel.add(label);
-        //     System.out.println("Label (#" + label.hashCode() + ") drawn at (" + x + ", " + y + ") with text: " + text);
-        // }
         public void drawLabel(JPanel panel, boolean useGraphics) {
+            if (cacheRendered.contains(this)) return;
             if (useGraphics) {
                 Graphics g = panel.getGraphics();
                 if (g == null) return;
@@ -130,6 +129,27 @@ public class LabelManager {
                 label.setVisible(visible);
                 panel.add(label);
                 System.out.println("Label (#" + label.hashCode() + ") drawn at (" + x + ", " + y + ") with text: " + text);
+            }
+            cacheRendered.add(this);
+        }
+
+        public void remove(JPanel panel) {
+            // remove the text from being displayed
+            // remove the label from the cache
+            if (cacheRendered.contains(this)) {
+                cacheRendered.remove(this);
+            }
+            panel.getGraphics().clearRect(x, y, width, height);
+            
+            if (panel.getComponents().length > 0) {
+                for (int i = 0; i < panel.getComponents().length; i++) {
+                    if (panel.getComponents()[i] instanceof JLabel) {
+                        JLabel label = (JLabel) panel.getComponents()[i];
+                        if (label.getText().equals(text)) {
+                            panel.remove(label);
+                        }
+                    }
+                }
             }
         }
     }

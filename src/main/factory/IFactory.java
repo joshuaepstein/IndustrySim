@@ -1,6 +1,5 @@
 package main.factory;
 
-import javax.swing.*;
 import java.awt.*;
 
 public interface IFactory {
