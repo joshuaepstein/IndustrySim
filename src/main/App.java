@@ -5,6 +5,7 @@ import main.factory.FactoryType;
 import main.factory.IFactory;
 import main.utils.Counter;
 import main.utils.Draw;
+import main.utils.FactoryManager;
 import main.utils.LabelManager;
 import main.utils.SoundManager;
 import main.utils.UnlockHelper;
@@ -36,9 +37,9 @@ public class App {
 	private static SoundManager soundManager = new SoundManager("src/resources/sounds/");
 	private LabelManager labelManager;
 	private UnlockHelper unlockHelper;
+	private FactoryManager factoryManager;
 	// private ToastManager toastManager;
 
-	public static List<IFactory> factories = new ArrayList<>();
 	private Counter ticks = new Counter(0);
 	private int gameLevel = 1;
 
@@ -49,12 +50,11 @@ public class App {
 	public App() {
 		this.labelManager = new LabelManager();
 		this.unlockHelper = new UnlockHelper();
-
-		factories = new ArrayList<>();
+		this.factoryManager = new FactoryManager();
 
 		frame = new JFrame("Industry Simulator");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(WIDTH, HEIGHT);
+		frame.setSize(WIDTH, HEIGHT + 50);
 
 		rootPanel = new JPanel();
 		rootPanel.setLayout(null);
@@ -72,49 +72,40 @@ public class App {
 		rootPanel.add(titleLabel);
 
 		for (FactoryType factoryType : FactoryType.values()) {
-			JLabel amountLabel = Draw.drawFactory(rootPanel, factoryType);
+			JLabel amountLabel = Draw.drawFactory(this, rootPanel, factoryType);
 			amountLabel.repaint();
 			factoryCountLabels.put(factoryType, amountLabel);
 		}
 
-		addFactory(new CoalFactory());
+		String[] labels = new String[] {
+			"Coal: " + money.get(FactoryType.COAL).getValue(),
+			"Copper: " + money.get(FactoryType.COPPER).getValue()
+		};
+		main.utils.LabelManager.Label[] labelObjects = new main.utils.LabelManager.Label[labels.length];
+		for (int i = 0; i < labels.length; i++) {
+			String label = labels[i];
+			labelObjects[i] = this.labelManager.addLabel(LabelType.TEXT, label, 10, HEIGHT - 50 + (i * 20));
+		}
+		factoryManager.addFactory(new CoalFactory());
 		Timer timer = new Timer(100, e -> {
 			ticks.increment();
-			this.labelManager.drawLabels(rootPanel, false);
+			this.labelManager.drawLabels(rootPanel);
 
 			if (ticks.getValue() % 10 == 0) {
-				for (IFactory factory1 : factories) {
-					if (!factory1.isOverworked()) {
-						money.computeIfAbsent(factory1.getType(), (factoryType) -> new Counter(0)).add(factory1.getProductionPerTick());
-					}
+				this.factoryManager.tick(gameLevel);
+			}
+
+			this.unlockHelper.checkAndUnlockResources(money, gameLevel, soundManager);
+			this.factoryCountLabels.forEach((factoryType, label) -> label.setText(String.valueOf(this.factoryManager.getFactoriesOfType(factoryType).size())));
+			for (LabelManager.Label label : labelObjects) {
+				if (label.getText().startsWith("Coal: ")) {
+					label.setText("Coal: " + money.get(FactoryType.COAL).getValue());
 				}
 			}
-
-			// if (money.get(FactoryType.COAL).getValue() >= 500 && gameLevel == 1) {
-			// 	gameLevel++;
-			// 	addToast("Level up! You are now level " + gameLevel);
-			// 	unlockedResources.put(FactoryType.COPPER, false);
-			// 	this.soundManager.playSound(SoundType.LEVEL_UP);
-			// }
-			this.unlockHelper.checkAndUnlockResources(money, gameLevel, soundManager);
-			this.factoryCountLabels.forEach((factoryType, label) -> label.setText(String.valueOf(App.getFactoriesOfType(factoryType).size())));
 		});
+
 		timer.setRepeats(true);
 		timer.start();
-	}
-
-	public static List<IFactory> getFactoriesOfType(FactoryType type) {
-		List<IFactory> factories = new ArrayList<>();
-		for (IFactory factory : App.factories) {
-			if (factory.getType() == type) {
-				factories.add(factory);
-			}
-		}
-		return factories;
-	}
-
-	public void addFactory(IFactory factory) {
-		factories.add(factory);
 	}
 
 	/**
@@ -142,4 +133,8 @@ public class App {
     public static SoundManager getSoundManager() {
 		return soundManager;
     }
+
+	public FactoryManager getFactoryManager() {
+		return factoryManager;
+	}
 }

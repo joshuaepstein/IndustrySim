@@ -27,34 +27,31 @@ public class LabelManager {
         addLabel(new Label(type, text, x, y, width, height, visible));
     }
 
-    public void addLabel(LabelType type, String text, int x, int y) {
+    public Label addLabel(LabelType type, String text, int x, int y) {
         int calculatedWidth = new Font("Arial", Font.PLAIN, 12).getSize() * text.length();
         int calculatedHeight = new Font("Arial", Font.PLAIN, 12).getSize();
-        addLabel(new Label(type, text, x, y, calculatedWidth, calculatedHeight, true));
+        return addLabel(new Label(type, text, x, y, calculatedWidth, calculatedHeight, true));
     }
 
-    public void addLabel(LabelType type, String text, int x, int y, int width, int height) {
-        addLabel(new Label(type, text, x, y, width, height, true));
+    public Label addLabel(LabelType type, String text, int x, int y, int width, int height) {
+        return addLabel(new Label(type, text, x, y, width, height, true));
     }
 
-    public void addLabel(LabelType type, String text, int x, int y, boolean visible) {
+    public Label addLabel(LabelType type, String text, int x, int y, boolean visible) {
         int calculatedWidth = new Font("Arial", Font.PLAIN, 12).getSize() * text.length();
         int calculatedHeight = new Font("Arial", Font.PLAIN, 12).getSize();
-        addLabel(new Label(type, text, x, y, calculatedWidth, calculatedHeight, visible));
+        return addLabel(new Label(type, text, x, y, calculatedWidth, calculatedHeight, visible));
     }
 
-    public void addLabel(Label label) {
+    public Label addLabel(Label label) {
         labels.add(label);
-    }
-
-    public void drawLabels(JPanel panel, boolean useGraphics) {
-        for (Label label : labels) {
-            label.drawLabel(panel, useGraphics);
-        }
+        return label;
     }
 
     public void drawLabels(JPanel panel) {
-        drawLabels(panel, false);
+        for (Label label : labels) {
+            label.drawLabel(panel);
+        }
     }
 
     public List<Label> getLabels() {
@@ -62,6 +59,7 @@ public class LabelManager {
     }
     
     public class Label {
+        private JLabel label;
         private LabelType type;
         private String text;
         private int x;
@@ -108,28 +106,15 @@ public class LabelManager {
             return visible;
         }
 
-        public void drawLabel(JPanel panel, boolean useGraphics) {
+        public void drawLabel(JPanel panel) {
             if (cacheRendered.contains(this)) return;
-            if (useGraphics) {
-                Graphics g = panel.getGraphics();
-                if (g == null) return;
-                if (type == LabelType.TITLE)
-                    g.setFont(new Font("Arial", Font.BOLD, 16));
-                else if (type == LabelType.BUTTON)
-                    g.setFont(new Font("Arial", Font.PLAIN, 12));
-                else
-                    g.setFont(new Font("Arial", Font.PLAIN, 12));
-                if (visible) {
-                    g.drawString(text, x, y);
-                    System.out.println("Label drawn at (" + x + ", " + y + ") with text: " + text);
-                }
-            } else {
-                JLabel label = new JLabel(text);
-                label.setBounds(x, y, width, height);
-                label.setVisible(visible);
-                panel.add(label);
-                System.out.println("Label (#" + label.hashCode() + ") drawn at (" + x + ", " + y + ") with text: " + text);
-            }
+            this.label = new JLabel(text);
+            label.setBounds(x, y, width, height);
+            label.setVisible(visible);
+            panel.add(label);
+            label.repaint();
+            
+            System.out.println("Label (#" + label.hashCode() + ") drawn at (" + x + ", " + y + ") with text: " + text);
             cacheRendered.add(this);
         }
 
@@ -151,6 +136,17 @@ public class LabelManager {
                     }
                 }
             }
+        }
+
+        public void repaint() {
+            this.label.setText(text);
+            this.label.setBounds(x, y, width, height);
+            this.label.repaint();
+        }
+
+        public void setText(String string) {
+            this.text = string;
+            repaint();
         }
     }
 

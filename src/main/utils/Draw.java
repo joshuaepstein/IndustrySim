@@ -23,7 +23,7 @@ public class Draw {
     public static final int SPACE_BETWEEN_FACTORIES = 50;
     private static final Map<FactoryType, JLabel> numberOfFactoriesLabels = new HashMap<>();
 
-    public static JLabel drawFactory(JPanel panel, FactoryType factoryType) {
+    public static JLabel drawFactory(App app, JPanel panel, FactoryType factoryType) {
 		if (panel == null) {
             System.out.println("Panel is null");
             return null;
@@ -59,9 +59,9 @@ public class Draw {
         g.drawRect(x - 2, y - 2, imageWidth + 4, imageWidth + 4);
 
         JLabel label = new JLabel();
-        int stringWidth = g.getFontMetrics().stringWidth(String.valueOf(App.getFactoriesOfType(factoryType).size()));
+        int stringWidth = g.getFontMetrics().stringWidth(String.valueOf(app.getFactoryManager().getFactoriesOfType(factoryType).size()));
         label.setBounds(x + (imageWidth / 2) - (stringWidth / 2) - 1, y + imageWidth + 5, stringWidth + 4, g.getFontMetrics().getHeight() - 6);
-        label.setText(String.valueOf(App.getFactoriesOfType(factoryType).size()));
+        label.setText(String.valueOf(app.getFactoryManager().getFactoriesOfType(factoryType).size()));
         panel.add(label);
         
         System.out.println("Drawing factory " + factoryType.getName());
@@ -69,10 +69,10 @@ public class Draw {
         return label;
     }
 
-    public static JLabel drawLabel(JPanel panel, FactoryType factoryType, int x, int y, int width) {
+    public static JLabel drawLabel(App app, JPanel panel, FactoryType factoryType, int x, int y, int width) {
         JLabel label = new JLabel();
         label.setBounds(x, y + width, width, 20);
-        label.setText(String.valueOf(App.getFactoriesOfType(factoryType).size()));
+        label.setText(String.valueOf(app.getFactoryManager().getFactoriesOfType(factoryType).size()));
         panel.add(label);
         return label;
     }
