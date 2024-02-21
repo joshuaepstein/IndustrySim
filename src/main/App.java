@@ -3,12 +3,14 @@ package main;
 import main.factory.CoalFactory;
 import main.factory.FactoryType;
 import main.factory.IFactory;
+import main.utils.ButtonManager;
 import main.utils.Counter;
 import main.utils.Draw;
 import main.utils.FactoryManager;
 import main.utils.LabelManager;
 import main.utils.SoundManager;
 import main.utils.UnlockHelper;
+import main.utils.ButtonManager.Button;
 import main.utils.LabelManager.LabelType;
 import main.utils.SoundManager.SoundType;
 
@@ -33,11 +35,13 @@ public class App {
 	}};
 
 	public Map<FactoryType, JLabel> factoryCountLabels = new HashMap<>();
+	public Map<FactoryType, JButton> factoryPurchaseButtons = new HashMap<>();
 	
 	private static SoundManager soundManager = new SoundManager("src/resources/sounds/");
 	private LabelManager labelManager;
 	private UnlockHelper unlockHelper;
 	private FactoryManager factoryManager;
+	private ButtonManager buttonManager;
 	// private ToastManager toastManager;
 
 	private Counter ticks = new Counter(0);
@@ -51,6 +55,7 @@ public class App {
 		this.labelManager = new LabelManager();
 		this.unlockHelper = new UnlockHelper();
 		this.factoryManager = new FactoryManager();
+		this.buttonManager = new ButtonManager();
 
 		frame = new JFrame("Industry Simulator");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -63,7 +68,7 @@ public class App {
 
 		frame.setLayout(null);
 		frame.setVisible(true);
-		// showOnScreen(2, frame); // Temp solution while on PC so that the images do not disappear when moving screens!
+		showOnScreen(1, frame); // Temp solution while on PC so that the images do not disappear when moving screens!
 
 		JLabel titleLabel = new JLabel("Industry Simulator");
 		titleLabel.setBounds(0, 0, WIDTH, 100);
@@ -77,19 +82,28 @@ public class App {
 			factoryCountLabels.put(factoryType, amountLabel);
 		}
 
-		String[] labels = new String[] {
-			"Coal: " + money.get(FactoryType.COAL).getValue(),
-			"Copper: " + money.get(FactoryType.COPPER).getValue()
-		};
-		main.utils.LabelManager.Label[] labelObjects = new main.utils.LabelManager.Label[labels.length];
-		for (int i = 0; i < labels.length; i++) {
-			String label = labels[i];
-			labelObjects[i] = this.labelManager.addLabel(LabelType.TEXT, label, 10, HEIGHT - 50 + (i * 20));
+		for (FactoryType type : FactoryType.values()) {
+			this.labelManager.addLabel(LabelType.TEXT, type.getNameAsCamel() + ": " + money.get(type).getValue(), 10, HEIGHT - 50 + (type.ordinal() * 20));
+		}
+		for (FactoryType type : FactoryType.values()) {
+			@SuppressWarnings("unused")
+			Button button = this.buttonManager.addButton("+", Draw.PADDING[0] + (type.ordinal() * type.getWidth()) + ((type.ordinal() + 1) * Draw.SPACE_BETWEEN_FACTORIES) - 6, 175, type.getWidth() + 12, type.getWidth(), () -> {
+				int factoryCost = type.getCost();
+				if (money.get(type).getValue() >= factoryCost) {
+					money.computeIfPresent(type, (factoryType, counter) -> {counter.subtract(factoryCost); return counter;});
+					try {
+						this.factoryManager.addFactory(type.getFactoryClass().getConstructor().newInstance());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
 		}
 		factoryManager.addFactory(new CoalFactory());
 		Timer timer = new Timer(100, e -> {
 			ticks.increment();
 			this.labelManager.drawLabels(rootPanel);
+			this.buttonManager.drawButtons(rootPanel);
 
 			if (ticks.getValue() % 10 == 0) {
 				this.factoryManager.tick(gameLevel);
@@ -97,9 +111,11 @@ public class App {
 
 			this.unlockHelper.checkAndUnlockResources(money, gameLevel, soundManager);
 			this.factoryCountLabels.forEach((factoryType, label) -> label.setText(String.valueOf(this.factoryManager.getFactoriesOfType(factoryType).size())));
-			for (LabelManager.Label label : labelObjects) {
-				if (label.getText().startsWith("Coal: ")) {
-					label.setText("Coal: " + money.get(FactoryType.COAL).getValue());
+			for (LabelManager.Label label : this.labelManager.getLabels()) {
+				for (FactoryType type : FactoryType.values()) {
+					if (label.getText().startsWith(type.getNameAsCamel() + ": ")) {
+						label.setText(type.getNameAsCamel() + ": " + money.get(type).getValue());
+					}
 				}
 			}
 		});

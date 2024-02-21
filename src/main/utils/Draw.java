@@ -59,8 +59,9 @@ public class Draw {
         g.drawRect(x - 2, y - 2, imageWidth + 4, imageWidth + 4);
 
         JLabel label = new JLabel();
-        int stringWidth = g.getFontMetrics().stringWidth(String.valueOf(app.getFactoryManager().getFactoriesOfType(factoryType).size()));
-        label.setBounds(x + (imageWidth / 2) - (stringWidth / 2) - 1, y + imageWidth + 5, stringWidth + 4, g.getFontMetrics().getHeight() - 6);
+        int stringWidth = imageWidth;
+        label.setBounds(x + (imageWidth / 2) - (stringWidth / 2) - 1, y + imageWidth + 5, stringWidth, g.getFontMetrics().getHeight() - 6);
+        label.setHorizontalAlignment(JLabel.CENTER);
         label.setText(String.valueOf(app.getFactoryManager().getFactoriesOfType(factoryType).size()));
         panel.add(label);
         
